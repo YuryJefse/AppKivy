@@ -1,13 +1,8 @@
 from kivy.app import App
-from kivy.uix.widget import Widget
-
-class MyWidget(Widget):
-	pass
+from kivy.uix.button import Button
 	
-class WidgetsApp(App):
-	
-	def build(self):
-		return MyWidget()
+class WeatherApp(App):
+        pass
 
 if __name__ == '__main__':
-	WidgetsApp().run()
+        WeatherApp().run()
