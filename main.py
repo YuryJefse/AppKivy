@@ -10,12 +10,18 @@ class LocationButton(ListItemButton):
         pass
 
 class WeatherRoot(BoxLayout):
-        def show_current_weather(self, location):
-                from kivy.uix.label import Label
+        current_weather = ObjectProperty()
+        
+        def show_current_weather(self, location=None):
                 self.clear_widgets()
-                current_weather = Factory.CurrentWeather()
-                current_weather.location = location
-                self.add_widget(current_weather)
+
+                if location is None and self.current_weather is None:
+                        location = "New York (US)"
+                if location is not None:
+                        self.current_weather = Factory.CurrentWeather()
+                        self.current_weather.location = location
+                self.add_widget(self.current_weather)
+                
         def show_add_location_form(self):
                 self.clear_widgets()
                 self.add_widget(AddLocationForm())
