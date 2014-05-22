@@ -6,9 +6,10 @@ from kivy.uix.listview import ListItemButton
 from kivy.network.urlrequest import UrlRequest
 from kivy.properties import ObjectProperty, ListProperty, StringProperty, NumericProperty
 
+#Classe que armazena os dados da temperatura da cidade corrente
 class CurrentWeather(BoxLayout):
         location = ListProperty(['New York', 'US'])
-        conditions = StringProperty()
+        conditions = ObjectProperty()
         temp = NumericProperty()
         temp_min = NumericProperty()
         temp_max = NumericProperty()
@@ -19,15 +20,23 @@ class CurrentWeather(BoxLayout):
                 request = UrlRequest(weather_url, self.weather_retrieved)
         
         def weather_retrieved(self, request, data):
-                data = json.loads(data.decode()) if not isinstance(data, dict) else data
-                self.conditions = data['weather'][0]['description']
+                data = json.loads(data.decode()) if not isinstance(data, dict) else data                
+                self.render_conditions(data['weather'][0]['description'])
                 self.temp = data['main']['temp']
                 self.temp_min = data['main']['temp_min']
                 self.temp_max = data['main']['temp_max']
 
+        def render_conditions(self, conditions_description):
+                conditions_widget = Factory.UnknownConditions()
+                conditions_widget.conditions = conditions_description
+                self.conditions.clear_widgets()
+                self.conditions.add_widget(conditions_widget)
+
+#Classe que controla a lista de botões do listItem
 class LocationButton(ListItemButton):
         location = ListProperty()
 
+#Classe que é responsável pelos forms e suas exibições
 class WeatherRoot(BoxLayout):
         current_weather = ObjectProperty()
         
@@ -47,6 +56,7 @@ class WeatherRoot(BoxLayout):
                 self.clear_widgets()
                 self.add_widget(AddLocationForm())
 
+#Classe que representa o form de pesquisa da cidade
 class AddLocationForm(BoxLayout):
         search_input = ObjectProperty()
         
@@ -67,10 +77,10 @@ class AddLocationForm(BoxLayout):
         def args_converter(self, index, data_item):
                 city = data_item.split(" (")[0]
                 country = data_item.split(" (")[1][0:-1]
-                print(data_item)
                 
                 return {'location': (city, country)}
 
+#Classe App onde é startada a aplicação
 class WeatherApp(App):
         pass
 

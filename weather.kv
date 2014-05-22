@@ -42,6 +42,7 @@ WeatherRoot:
 
 <CurrentWeather>:
 	orientation: "vertical"
+	conditions: conditions
 	BoxLayout:
 		Label:
 			text: "{} ({})".format(root.location[0], root.location[1])
@@ -49,8 +50,8 @@ WeatherRoot:
 		Label:
 			text: "{}".format(root.temp)
 			font_size: "30dp"
-	Label:
-		text: root.conditions
+	BoxLayout:
+		id: conditions
 	BoxLayout:
 		orientation: "horizontal"
 		Label:
@@ -66,3 +67,14 @@ WeatherRoot:
 			on_press: app.root.show_add_location_form()
 		Button:
 			text: "Forecast"
+
+<UnknownConditions@BoxLayout>:
+	conditions: ""
+	canvas:
+		Color:
+			rgb: [0.2, 0.2, 0.2]
+		Ellipse:
+			pos: self.pos
+			size: self.size
+	Label:
+		text: root.conditions
