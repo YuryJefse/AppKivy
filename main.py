@@ -1,11 +1,24 @@
 import json
 from kivy.app import App
+from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty
+from kivy.uix.listview import ListItemButton
 from kivy.network.urlrequest import UrlRequest
 
-class WeatherRoot(BoxLayout):
+class LocationButton(ListItemButton):
         pass
+
+class WeatherRoot(BoxLayout):
+        def show_current_weather(self, location):
+                from kivy.uix.label import Label
+                self.clear_widgets()
+                current_weather = Factory.CurrentWeather()
+                current_weather.location = location
+                self.add_widget(current_weather)
+        def show_add_location_form(self):
+                self.clear_widgets()
+                self.add_widget(AddLocationForm())
 
 class AddLocationForm(BoxLayout):
         search_input = ObjectProperty()
