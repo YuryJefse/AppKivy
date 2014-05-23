@@ -27,7 +27,10 @@ class CurrentWeather(BoxLayout):
                 self.temp_max = data['main']['temp_max']
 
         def render_conditions(self, conditions_description):
-                conditions_widget = Factory.UnknownConditions()
+                if "clear" in conditions_description.lower():
+                        conditions_widget = Factory.ClearConditions()
+                else:
+                        conditions_widget = Factory.UnknownConditions()
                 conditions_widget.conditions = conditions_description
                 self.conditions.clear_widgets()
                 self.conditions.add_widget(conditions_widget)
