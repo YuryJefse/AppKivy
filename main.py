@@ -1,10 +1,36 @@
 import json
+import random
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
+from kivy.graphics import Color, Ellipse
 from kivy.uix.listview import ListItemButton
 from kivy.network.urlrequest import UrlRequest
 from kivy.properties import ObjectProperty, ListProperty, StringProperty, NumericProperty
+
+#Classe que vai redenrizar a animação e a parte grafica da condição do tempo
+class SnowConditions(Conditions):
+        flake_size = 5
+        num_flakes = 60
+        flake_area = flake_size * num_flakes
+        flake_interval = 1.0/30.0
+
+        def __init__(self, **kwargs):
+                super(SnowConditions, self).__init__(**kwargs)
+                self.flakes = [[x * self.flake_size, 0] for x in range(self.num_flakes)]
+                Clock.schedule_interval(self.update_flakes, self.flake_interval)
+
+        def update_flakes(self, time):
+                for f in self.flakes:
+                        f[0] += random.choice([-1, 1])
+                        f[1] -= random.randint(0, self.flake_size)
+                        if f[1] <=0
+                                f[1] -= random.randint(0, int(self.height))
+
+#Classe widget abstrato
+class Conditions(BoxLayout):
+        conditions = StringProperty
 
 #Classe que armazena os dados da temperatura da cidade corrente
 class CurrentWeather(BoxLayout):
@@ -29,6 +55,8 @@ class CurrentWeather(BoxLayout):
         def render_conditions(self, conditions_description):
                 if "clear" in conditions_description.lower():
                         conditions_widget = Factory.ClearConditions()
+                elif "snow" in conditions_description.lower():
+                        conditions_widget = SnowConditions()
                 else:
                         conditions_widget = Factory.UnknownConditions()
                 conditions_widget.conditions = conditions_description
