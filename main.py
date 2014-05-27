@@ -9,12 +9,16 @@ from kivy.uix.listview import ListItemButton
 from kivy.network.urlrequest import UrlRequest
 from kivy.properties import ObjectProperty, ListProperty, StringProperty, NumericProperty
 
+#Classe widget abstrato
+class Conditions(BoxLayout):
+        conditions = StringProperty()
+
 #Classe que vai redenrizar a animação e a parte grafica da condição do tempo
 class SnowConditions(Conditions):
         flake_size = 5
         num_flakes = 60
         flake_area = flake_size * num_flakes
-        flake_interval = 1.0/30.0
+        flake_interval = 1.0/5.0
 
         def __init__(self, **kwargs):
                 super(SnowConditions, self).__init__(**kwargs)
@@ -24,13 +28,20 @@ class SnowConditions(Conditions):
         def update_flakes(self, time):
                 for f in self.flakes:
                         f[0] += random.choice([-1, 1])
-                        f[1] -= random.randint(0, self.flake_size)
-                        if f[1] <=0
-                                f[1] -= random.randint(0, int(self.height))
-
-#Classe widget abstrato
-class Conditions(BoxLayout):
-        conditions = StringProperty
+                        f[1] = random.randint(0, self.flake_size)
+                        if f[1] <=0:
+                                f[1] = random.randint(0, int(self.height))
+                
+                self.canvas.before.clear()
+                with self.canvas.before:
+                        widget_x = self.center_x - self.flake_area/2
+                        widget_y = self.pos[1]
+                        for x_flake, y_flake in self.flakes:
+                                x = widget_x + x_flake
+                                y = widget_y + y_flake
+                                
+                                Color(0.9, 0.9, 1.0)
+                                Ellipse(pos=(x,y), size=(self.flake_size, self.flake_size))
 
 #Classe que armazena os dados da temperatura da cidade corrente
 class CurrentWeather(BoxLayout):
