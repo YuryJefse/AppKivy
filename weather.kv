@@ -40,10 +40,12 @@ WeatherRoot:
         text: "Cancel"
         on_press: app.root.show_current_weather(None)
 
-# BEGIN LOCATIONS
 <Locations@BoxLayout>:
     orientation: "vertical"
     locations_list: locations_list
+	Button:
+		text: "Settings"
+		on_press: app.open_settings()
     ListView:
         id: locations_list
         adapter:
@@ -58,7 +60,6 @@ WeatherRoot:
         Button:
             text: "Add Location"
             on_press: app.root.show_add_location_form()
-# END LOCATIONS
 
 <CurrentWeather>:
     orientation: "vertical"
