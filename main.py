@@ -1,47 +1,39 @@
 import json
-import random
 from kivy.app import App
-from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
-from kivy.graphics import Color, Ellipse
 from kivy.uix.listview import ListItemButton
+from kivy.storage.jsonstore import JsonStore
 from kivy.network.urlrequest import UrlRequest
-from kivy.properties import ObjectProperty, ListProperty, StringProperty, NumericProperty
+from kivy.properties import (ObjectProperty, ListProperty, StringProperty, NumericProperty)
 
-#Classe widget abstrato
-class Conditions(BoxLayout):
-        conditions = StringProperty()
 
-#Classe que vai redenrizar a animação e a parte grafica da condição do tempo
-class SnowConditions(Conditions):
-        flake_size = 5
-        num_flakes = 60
-        flake_area = flake_size * num_flakes
-        flake_interval = 1.0/30.0
+def locations_args_converter(index, data_item):
+        print(data_item)
+        city, country = data_item
+        return {'location': (city, country)}
 
-        def __init__(self, **kwargs):
-                super(SnowConditions, self).__init__(**kwargs)
-                self.flakes = [[x * self.flake_size, 0] for x in range(self.num_flakes)]
-                Clock.schedule_interval(self.update_flakes, self.flake_interval)
+#Classe que controla a lista de botões do listItem
+class LocationButton(ListItemButton):
+        location = ListProperty()
 
-        def update_flakes(self, time):
-                for f in self.flakes:
-                        f[0] += random.choice([-1, 1])
-                        f[1] -= random.randint(0, self.flake_size)
-                        if f[1] <=0:
-                                f[1] = random.randint(0, int(self.height))
-                
-                self.canvas.before.clear()
-                with self.canvas.before:
-                        widget_x = self.center_x - self.flake_area/2
-                        widget_y = self.pos[1]
-                        for x_flake, y_flake in self.flakes:
-                                x = widget_x + x_flake
-                                y = widget_y + y_flake
-                                
-                                Color(0.9, 0.9, 1.0)
-                                Ellipse(pos=(x,y), size=(self.flake_size, self.flake_size))
+#Classe que representa o form de pesquisa da cidade
+class AddLocationForm(BoxLayout):
+        search_input = ObjectProperty()
+        search_results = ObjectProperty()
+
+        def search_location(self):
+                search_template = "http://api.openweathermap.org/data/2.5/find?q={}&type=like"
+                search_url = search_template.format(self.search_input.text)
+                request = UrlRequest(search_url, self.found_location)
+
+        def found_location(self, request, data):
+                data = json.loads(data.decode()) if not isinstance(data, dict) else data
+                cities = [(d['name'], d['sys']['country']) for d in data['list']]
+                self.search_results.item_strings = cities
+                del self.search_results.adapter.data[:]
+                self.search_results.adapter.data.extend(cities)
+                self.search_results._trigger_reset_populate()
 
 #Classe que armazena os dados da temperatura da cidade corrente
 class CurrentWeather(BoxLayout):
@@ -59,73 +51,58 @@ class CurrentWeather(BoxLayout):
         
         def weather_retrieved(self, request, data):
                 data = json.loads(data.decode()) if not isinstance(data, dict) else data
-
-                #Esse method e usado quando quiser utilizar graphics
-                #self.render_conditions(data['weather'][0]['description'])
                 self.conditions = data['weather'][0]['description']
-                self.conditions_image = "http://openweathermap.org/img/w/{}.png".format(data['weather'][0]['icon'])
+                self.conditions_image = "http://openweathermap.org/img/w/{}.png".format(
+                        data['weather'][0]['icon'])
                 self.temp = data['main']['temp']
                 self.temp_min = data['main']['temp_min']
                 self.temp_max = data['main']['temp_max']
-
-        def render_conditions(self, conditions_description):
-                if "clear" in conditions_description.lower():
-                        conditions_widget = Factory.ClearConditions()
-                elif "snow" in conditions_description.lower():
-                        conditions_widget = SnowConditions()
-                else:
-                        conditions_widget = Factory.UnknownConditions()
-                conditions_widget.conditions = conditions_description
-                self.conditions.clear_widgets()
-                self.conditions.add_widget(conditions_widget)
-
-#Classe que controla a lista de botões do listItem
-class LocationButton(ListItemButton):
-        location = ListProperty()
+                
 
 #Classe que é responsável pelos forms e suas exibições
 class WeatherRoot(BoxLayout):
         current_weather = ObjectProperty()
+        locations = ObjectProperty()
+
+        def __init__(self, **kwargs):
+                super(WeatherRoot, self).__init__(**kwargs)
+                self.store = JsonStore("weather_store.json")
+                if self.store.exists('locations'):
+                        current_location = self.store.get("locations")["current_location"]
+                        self.show_current_weather(current_location)
         
         def show_current_weather(self, location=None):
                 self.clear_widgets()
 
                 if self.current_weather is None:
                         self.current_weather = CurrentWeather()
-                
+                if self.locations is None:
+                        self.locations = Factory.Locations()
+                        if(self.store.exists('locations')):
+                                locations = self.store.get("locations")['locations']
+                                self.locations.locations_list.adapter.data.extend(locations)
+
                 if location is not None:
                         self.current_weather.location = location
+                        if location not in self.locations.locations_list.adapter.data:
+                                self.locations.locations_list.adapter.data.append(location)
+                                self.locations.locations_list._trigger_reset_populate()
+                                self.store.put("locations",
+                                               locations = list(self.locations.locations_list.adapter.data),
+                                               current_location = location)
 
                 self.current_weather.update_weather()
                 self.add_widget(self.current_weather)
-                
+
         def show_add_location_form(self):
                 self.clear_widgets()
                 self.add_widget(AddLocationForm())
 
-#Classe que representa o form de pesquisa da cidade
-class AddLocationForm(BoxLayout):
-        search_input = ObjectProperty()
-        
-        def search_location(self):
-                search_template = "http://api.openweathermap.org/data/2.5/find?q={}&type=like"
-                search_url = search_template.format(self.search_input.text)
-                request = UrlRequest(search_url, self.found_location)
+        def show_locations(self):
+                self.clear_widgets()
+                print(self.locations)
+                self.add_widget(self.locations)
 
-        def found_location(self, request, data):
-                data = json.loads(data.decode()) if not isinstance(data,dict) else data
-                cities = ["{} ({})".format(d['name'], d['sys']['country'])
-                          for d in data['list']]
-                self.search_results.item_strings = cities
-                self.search_results.adapter.data.clear()
-                self.search_results.adapter.data.extend(cities)
-                self.search_results._trigger_reset_populate()
-                
-        def args_converter(self, index, data_item):
-                city = data_item.split(" (")[0]
-                country = data_item.split(" (")[1][0:-1]
-                
-                return {'location': (city, country)}
 
 #Classe App onde é startada a aplicação
 class WeatherApp(App):
