@@ -42,7 +42,6 @@ WeatherRoot:
 
 <CurrentWeather>:
 	orientation: "vertical"
-	conditions: conditions
 	BoxLayout:
 		Label:
 			text: "{} ({})".format(root.location[0], root.location[1])
@@ -51,7 +50,11 @@ WeatherRoot:
 			text: "{}".format(root.temp)
 			font_size: "30dp"
 	BoxLayout:
-		id: conditions
+		orientation: "horizontal"
+		Label:
+			text: root.conditions
+		AsyncImage:
+			source: root.conditions_image
 	BoxLayout:
 		orientation: "horizontal"
 		Label:
