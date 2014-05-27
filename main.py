@@ -18,7 +18,7 @@ class SnowConditions(Conditions):
         flake_size = 5
         num_flakes = 60
         flake_area = flake_size * num_flakes
-        flake_interval = 1.0/5.0
+        flake_interval = 1.0/30.0
 
         def __init__(self, **kwargs):
                 super(SnowConditions, self).__init__(**kwargs)
@@ -28,7 +28,7 @@ class SnowConditions(Conditions):
         def update_flakes(self, time):
                 for f in self.flakes:
                         f[0] += random.choice([-1, 1])
-                        f[1] = random.randint(0, self.flake_size)
+                        f[1] -= random.randint(0, self.flake_size)
                         if f[1] <=0:
                                 f[1] = random.randint(0, int(self.height))
                 
@@ -64,12 +64,12 @@ class CurrentWeather(BoxLayout):
                 self.temp_max = data['main']['temp_max']
 
         def render_conditions(self, conditions_description):
-                if "clear" in conditions_description.lower():
-                        conditions_widget = Factory.ClearConditions()
-                elif "snow" in conditions_description.lower():
-                        conditions_widget = SnowConditions()
-                else:
-                        conditions_widget = Factory.UnknownConditions()
+                #if "clear" in conditions_description.lower():
+                #        conditions_widget = Factory.ClearConditions()
+                #elif "snow" in conditions_description.lower():
+                conditions_widget = SnowConditions()
+                #else:
+                #        conditions_widget = Factory.UnknownConditions()
                 conditions_widget.conditions = conditions_description
                 self.conditions.clear_widgets()
                 self.conditions.add_widget(conditions_widget)
