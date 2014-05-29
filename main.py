@@ -2,6 +2,7 @@ import json
 import datetime
 from kivy.app import App
 from kivy.factory import Factory
+from gesture_box import GestureBox
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.listview import ListItemButton
 from kivy.storage.jsonstore import JsonStore
@@ -24,10 +25,10 @@ class AddLocationForm(BoxLayout):
     search_results = ObjectProperty()
 
     def search_location(self):
-        search_template = "http://api.openweathermap.org/data/2.5/"\
-            "find?q={}&type=like"
+        search_template = "http://api.openweathermap.org/"\
+            "data/2.5/find?q={}&type=like"
         search_url = search_template.format(self.search_input.text)
-        request = UrlRequest(search_url, self.found_location)
+        UrlRequest(search_url, self.found_location)
 
     def found_location(self, request, data):
         data = json.loads(data.decode()) if not isinstance(data, dict) else data
@@ -38,7 +39,7 @@ class AddLocationForm(BoxLayout):
         self.search_results._trigger_reset_populate()
 
 
-class CurrentWeather(BoxLayout):
+class CurrentWeather(GestureBox):
     location = ListProperty(['New York', 'US'])
     conditions = StringProperty()
     conditions_image = StringProperty()
@@ -49,11 +50,11 @@ class CurrentWeather(BoxLayout):
     def update_weather(self):
         config = WeatherApp.get_running_app().config
         temp_type = config.getdefault("General", "temp_type", "metric").lower()
-        weather_template = "http://api.openweathermap.org/data/2.5/"\
-            "weather?q={},{}&units={}"
+        weather_template = "http://api.openweathermap.org/data/2.5"\
+            "/weather?q={},{}&units={}"
         weather_url = weather_template.format(self.location[0],
             self.location[1], temp_type)
-        request = UrlRequest(weather_url, self.weather_retrieved)
+        UrlRequest(weather_url, self.weather_retrieved)
 
     def weather_retrieved(self, request, data):
         data = json.loads(data.decode()) if not isinstance(data, dict) else data
@@ -65,32 +66,30 @@ class CurrentWeather(BoxLayout):
         self.temp_max = data['main']['temp_max']
 
 
-class Forecast(BoxLayout):
+class Forecast(GestureBox):
     location = ListProperty(['New York', 'US'])
     forecast_container = ObjectProperty()
 
     def update_weather(self):
         config = WeatherApp.get_running_app().config
         temp_type = config.getdefault("General", "temp_type", "metric").lower()
-        weather_template = "http://api.openweathermap.org/data/2.5/forecast/"\
-            "daily?q={},{}&units={}&cnt=3"
-        weather_url = weather_template.format(
-            self.location[0],
-            self.location[1],
-            temp_type)
-        request = UrlRequest(weather_url, self.weather_retrieved)
+        weather_template = "http://api.openweathermap.org/data/2.5/"\
+                    "forecast/daily?q={},{}&units={}&cnt=3"
+        weather_url = weather_template.format(self.location[0],
+            self.location[1], temp_type)
+        UrlRequest(weather_url, self.weather_retrieved)
 
     def weather_retrieved(self, request, data):
         data = json.loads(data.decode()) if not isinstance(data, dict) else data
         self.forecast_container.clear_widgets()
         for day in data['list']:
             label = Factory.ForecastLabel()
-            label.date = datetime.datetime.fromtimestamp(day['dt']).strftime(
-                "%a %b %d")
+            label.date = datetime.datetime.fromtimestamp(day['dt'])\
+                .strftime("%a %b %d")
 
             label.conditions = day['weather'][0]['description']
-            label.conditions_image = "http://openweathermap.org/img/w/{}.png"\
-                .format(
+            label.conditions_image = ("http://openweathermap.org/"
+                "img/w/{}.png").format(
                 day['weather'][0]['icon'])
             label.temp_min = day['temp']['min']
             label.temp_max = day['temp']['max']
