@@ -75,8 +75,6 @@ WeatherRoot:
 
 <CurrentWeather>:
     orientation: "vertical"
-    on_right_to_left_line: app.root.show_forecast(root.location)
-    on_bottom_to_top_line: root.update_weather()
     BoxLayout:
         Label:
             text: "{} ({})".format(root.location[0], root.location[1])
@@ -155,4 +153,4 @@ WeatherRoot:
         height: "40dp"
         Button:
             text: "Current"
-            on_press: app.root.carousel.load_slide(app.root.locations)
+            on_press: app.root.carousel.load_slide(app.root.current_weather)

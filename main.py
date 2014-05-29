@@ -3,7 +3,6 @@ import datetime
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.factory import Factory
-from gesture_box import GestureBox
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.modalview import ModalView
 from kivy.uix.listview import ListItemButton
@@ -41,7 +40,7 @@ class AddLocationForm(ModalView):
         self.search_results._trigger_reset_populate()
 
 
-class CurrentWeather(GestureBox):
+class CurrentWeather(BoxLayout):
     location = ListProperty(['New York', 'US'])
     conditions = StringProperty()
     conditions_image = StringProperty()
@@ -68,7 +67,7 @@ class CurrentWeather(GestureBox):
         self.temp_max = data['main']['temp_max']
 
 
-class Forecast(GestureBox):
+class Forecast(BoxLayout):
     location = ListProperty(['New York', 'US'])
     forecast_container = ObjectProperty()
 
@@ -100,6 +99,7 @@ class Forecast(GestureBox):
 
 class WeatherRoot(BoxLayout):
 
+    carousel = ObjectProperty()
     current_weather = ObjectProperty()
     forecast = ObjectProperty()
     locations = ObjectProperty()
@@ -118,8 +118,8 @@ class WeatherRoot(BoxLayout):
             #self.show_add_location_form()
             Clock.schedule_once(lambda dt: self.show_add_location_form())
 
-    def show_current_weather(self, location=None):
-        if location in self.locations.locations_list.adapter.data:
+    def show_current_weather(self, location):
+        if location not in self.locations.locations_list.adapter.data:
             self.locations.locations_list.adapter.data.append(location)
             self.locations.locations_list._trigger_reset_populate()
             self.store.put("locations",
@@ -135,25 +135,9 @@ class WeatherRoot(BoxLayout):
         if self.add_location_form is not None:
             self.add_location_form.dismiss()
 
-    def show_forecast(self, location=None):
-        self.clear_widgets()
-
-        if self.forecast is None:
-            self.forecast = Factory.Forecast()
-
-        if location is not None:
-            self.forecast.location = location
-
-        self.forecast.update_weather()
-        self.add_widget(self.forecast)
-
     def show_add_location_form(self):
         self.add_location_form = AddLocationForm()
         self.add_location_form.open()
-
-    def show_locations(self):
-        self.clear_widgets()
-        self.add_widget(self.locations)
 
 
 class WeatherApp(App):
