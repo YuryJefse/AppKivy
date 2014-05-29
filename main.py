@@ -1,9 +1,11 @@
 import json
 import datetime
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.factory import Factory
 from gesture_box import GestureBox
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.modalview import ModalView
 from kivy.uix.listview import ListItemButton
 from kivy.storage.jsonstore import JsonStore
 from kivy.network.urlrequest import UrlRequest
@@ -20,7 +22,7 @@ class LocationButton(ListItemButton):
     location = ListProperty()
 
 
-class AddLocationForm(BoxLayout):
+class AddLocationForm(ModalView):
     search_input = ObjectProperty()
     search_results = ObjectProperty()
 
@@ -97,39 +99,41 @@ class Forecast(GestureBox):
 
 
 class WeatherRoot(BoxLayout):
+
     current_weather = ObjectProperty()
     forecast = ObjectProperty()
     locations = ObjectProperty()
+    add_location_form = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(WeatherRoot, self).__init__(**kwargs)
         self.store = JsonStore("weather_store.json")
         if self.store.exists('locations'):
-            current_location = self.store.get("locations")["current_location"]
+            locations = self.store.get('locations')
+            self.locations.locations_list.adapter.data.extend(
+                locations['locations'])
+            current_location = locations["current_location"]
             self.show_current_weather(current_location)
+        else:
+            #self.show_add_location_form()
+            Clock.schedule_once(lambda dt: self.show_add_location_form())
 
     def show_current_weather(self, location=None):
-        self.clear_widgets()
+        if location in self.locations.locations_list.adapter.data:
+            self.locations.locations_list.adapter.data.append(location)
+            self.locations.locations_list._trigger_reset_populate()
+            self.store.put("locations",
+                locations=list(self.locations.locations_list.adapter.data),
+                current_location=location)
 
-        if self.current_weather is None:
-            self.current_weather = CurrentWeather()
-        if self.locations is None:
-            self.locations = Factory.Locations()
-            if (self.store.exists('locations')):
-                locations = self.store.get("locations")['locations']
-                self.locations.locations_list.adapter.data.extend(locations)
-
-        if location is not None:
-            self.current_weather.location = location
-            if location not in self.locations.locations_list.adapter.data:
-                self.locations.locations_list.adapter.data.append(location)
-                self.locations.locations_list._trigger_reset_populate()
-                self.store.put("locations",
-                    locations=list(self.locations.locations_list.adapter.data),
-                    current_location=location)
-
+        self.current_weather.location = location
+        self.forecast.location = location
         self.current_weather.update_weather()
-        self.add_widget(self.current_weather)
+        self.forecast.update_weather()
+
+        self.carousel.load_slide(self.current_weather)
+        if self.add_location_form is not None:
+            self.add_location_form.dismiss()
 
     def show_forecast(self, location=None):
         self.clear_widgets()
@@ -144,8 +148,8 @@ class WeatherRoot(BoxLayout):
         self.add_widget(self.forecast)
 
     def show_add_location_form(self):
-        self.clear_widgets()
-        self.add_widget(AddLocationForm())
+        self.add_location_form = AddLocationForm()
+        self.add_location_form.open()
 
     def show_locations(self):
         self.clear_widgets()
@@ -171,7 +175,8 @@ class WeatherApp(App):
     def on_config_change(self, config, section, key, value):
         if config is self.config and key == "temp_type":
             try:
-                self.root.children[0].update_weather()
+                self.root.current_weather.update_weather()
+                self.root.forecast.update_weather()
             except AttributeError:
                 pass
 
