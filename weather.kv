@@ -9,14 +9,42 @@ WeatherRoot:
     locations: locations
     current_weather: current_weather
     forecast: forecast
-    Carousel:
-        id: carousel
-        Locations:
-            id: locations
-        CurrentWeather:
-            id: current_weather
-        Forecast:
-            id: forecast
+    BoxLayout:
+        orientation: "vertical"
+        ActionBar:
+            ActionView:
+                use_separator: True
+                ActionPrevious:
+                    title: "Kivy Weather"
+                    with_previous: False
+                ActionOverflow:
+                    ActionButton:
+                        text: "Add Location"
+                        on_press: app.root.show_add_location_form()
+                    ActionButton:
+                        text: "Settings"
+                        on_press: app.open_settings()
+                ActionButton:
+                    text: "Locations"
+                    on_press:
+                        app.root.carousel.load_slide(app.root.locations)
+                ActionButton:
+                    text: "Current"
+                    on_press:
+                        app.root.carousel.load_slide(app.root.current_weather)
+                ActionButton:
+                    text: "Forecast"
+                    on_press:
+                        app.root.carousel.load_slide(app.root.forecast)
+
+        Carousel:
+            id: carousel
+            Locations:
+                id: locations
+            CurrentWeather:
+                id: current_weather
+            Forecast:
+                id: forecast
 
 <AddLocationForm>:
     search_input: search_box

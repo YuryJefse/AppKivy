@@ -115,7 +115,6 @@ class WeatherRoot(BoxLayout):
             current_location = locations["current_location"]
             self.show_current_weather(current_location)
         else:
-            #self.show_add_location_form()
             Clock.schedule_once(lambda dt: self.show_add_location_form())
 
     def show_current_weather(self, location):
